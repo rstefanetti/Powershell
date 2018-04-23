@@ -1,0 +1,101 @@
+#RS, 20181904, FULL POWERSHELL SCRIPT TO CREATE A NEW NAV SERVER - TEST LOCAL ENVIRONMENT NAV 2018
+
+# CREATION OF NEW ENVIRONMENT
+# SETS ENVIRONMENT
+Set-ExecutionPolicy unrestricted
+$serviceDir = $env:ProgramFiles + '\Microsoft Dynamics NAV\110\Service'
+$serviceDir
+
+# CREATE VARIABLES FOR SERVICES
+Import-Module $servicedir\NavAdminTool.ps1
+$dbserver = 'SQL2016'
+$newdbname = 'NAV2018_CU4_GDPR_TEST'
+$serviceAccount = 'ANAFCORP\SEDP2'
+
+# READING FROM "BACKUP_NAV2018_ITA_CU42017.bak"
+$filePath = 'C:\BACKUP'
+$openFileDialog = New-Object -TypeName System.Windows.Forms.OpenFileDialog
+$openFileDialog.ShowDialog()
+$backupPath = $openFileDialog.FileName
+$backupPath
+
+# CREATE New NAV DATABASE from Cronus Bak "BACKUP_NAV2018_ITA_CU42017.bak"
+New-NAVDatabase -DatabaseServer $dbserver -DatabaseName $newdbname -ServiceAccount $serviceAccount `
+ -DestinationPath $filePath -FilePath $backupPath -Verbose
+
+# ASSIGN SERVICE PORTS
+$mgtServicePort = '9245'
+$cliServicePort = '9246'
+$soapServicePort = '9247'
+$odataServicePort = '9248'
+$newSrvInstance = 'NAV2018_CU4_GDPR_TEST'
+$cred = Get-Credential
+
+# CREATE New NAV Server Service
+New-NAVServerInstance $newSrvInstance -ManagementServicesPort $mgtServicePort -ClientServicesPort $cliServicePort `
+-SOAPServicesPort $soapServicePort -ODataServicesPort $odataServicePort -DatabaseServer $dbserver `
+-DatabaseName $newdbname -ClientServicesCredentialType Windows -ServiceAccount User -ServiceAccountCredential $cred -Verbose
+
+# UPLOAD DEMO license file
+$licenseFilePath = 'C:\BACKUP\DemoLicenseNAV2018.flf'
+Import-NAVServerLicense -LicenseFile $licenseFilePath -Database NavDatabase -ServerInstance $newSrvInstance -Verbose
+Set-NAVServerInstance $newSrvInstance -Restart -Verbose
+$outlicenseinfofile = 'c:\BACKUP\licenseinfo.txt'
+
+# CHANGE DATA CACHE SIZE
+$dataCache = 'DataCacheSize'
+Set-NAVServerConfiguration -KeyName $dataCache -KeyValue 10 -ServerInstance $newSrvInstance -Verbose
+Set-NAVServerInstance $newSrvInstance -Restart -Verbose
+
+# CREATE New TST Permission Set - FROM SUPER
+# CREATE -> Permissions -> Assign Users
+$permSetId = 'GDPR'
+$permSetName = 'DEMO SET GDPR TEST'
+$myName = 'Roberto Stefanetti'
+$myProfileID = 9019
+New-NAVServerPermissionSet -PermissionSetId $permSetId -PermissionSetName $permSetName -ServerInstance $newSrvInstance -Verbose
+New-NAVServerPermission -PermissionSetId $permSetId -ObjectType TableData -ObjectId 18 -Read Yes -Insert Yes -Modify Yes -Execute Yes -ServerInstance $newSrvInstance -Verbose
+New-NAVServerUser -WindowsAccount $serviceAccount -FullName $myName -LicenseType Full -CreateWebServicesKey -ProfileId $myProfileID -ServerInstance $newSrvInstance
+New-NAVServerUserPermissionSet -PermissionSetId 'SUPER'-WindowsAccount $serviceAccount -ServerInstance $newSrvInstance -Verbose
+New-NAVServerUserPermissionSet -PermissionSetId $permsetid -WindowsAccount $serviceAccount -ServerInstance $newSrvInstance -Verbose
+
+#NAV COMPANY ASSIGN 
+$navDataDesc = 'GDPR TEST COMPANY'
+$startCompany = 'GDPR TEST START'
+$destCompany = 'GDPR TEST'
+$companyArray = 'GDPR 1', 'GDPR 2', 'GDPR 3', 'GDPR 4'
+
+# CREATE NEW WEB CLIENT - EXAMPLE GDPR WEB SERVER
+$newWebServerName = 'GDPR'
+New-NAVWebServerInstance -ClientServicesCredentialType Windows `
+-ClientServicesPort $cliServicePort `
+-Company $destCompany `
+-Server localhost `
+-ServerInstance $newSrvInstance `
+-WebServerInstance $newWebServerName -Verbose
+
+Get-NAVWebServerInstance -WebServerInstance $newWebServerName
+Get-NAVWebServerInstance -WebServerInstance $newWebServerName | Get-Member
+
+$wsh = New-Object -ComObject 'wscript.shell'
+Get-NAVWebServerInstance -WebServerInstance $newWebServerName |`
+ForEach-Object {
+    echo $_.Uri
+    $wsh.Run($_.Uri)
+}
+
+Get-alias -Name %
+Get-NAVWebServerInstance -WebServerInstance $newWebServerName |`
+% {
+    echo $_.Uri
+    $wsh.Run($_.Uri)
+    $uriNewWebServer = $_.Uri
+}
+
+Set-NAVWebServerInstanceConfiguration -WebServerInstance $newWebServerName `
+-KeyName 'ShowPageSearch' `
+-KeyValue $false -Verbose
+$wsh.run($uriNewWebServer)
+
+Get-NAVServerSession -ServerInstance $newSrvInstance
+Remove-NAVWebServerInstance -WebServerInstance $newWebServerName -Force

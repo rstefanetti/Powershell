@@ -1,0 +1,181 @@
+# SOME POWERSEHLL USEFUL COMMANDS
+# EXPORT SERVER INSTANCE
+Export-NAVServerLicenseInformation -ServerInstance $newSrvInstance | Format-Wide -Column 1
+Export-NAVServerLicenseInformation -ServerInstance $newSrvInstance > $outlicenseinfofile
+Set-Alias -Name np -Value notepad
+np $outlicenseinfofile
+
+# CHANGE DATA CACHE SIZE
+$dataCache = 'DataCacheSize'
+Set-NAVServerConfiguration -KeyName $dataCache -KeyValue 10 -ServerInstance $newSrvInstance -Verbose
+Set-NAVServerInstance $newSrvInstance -Restart -Verbose
+
+# READ NAV SERVER CONFIGURATION
+Get-NAVServerConfiguration $newSrvInstance -AsXml | Get-Member
+$xmlFile = Get-NAVServerConfiguration $newSrvInstance -AsXml 
+
+# REMOVE New NAV Server service
+#Remove-NAVServerInstance -ServerInstance $newSrvInstance -Verbose 
+
+# GET NAV Server instance
+Get-NAVServerInstance -ServerInstance $newSrvInstance -Verbose
+Set-NAVServerInstance $newSrvInstance -Start -Verbose
+Get-NAVServerInstance -ServerInstance $newSrvInstance -Verbose
+
+#NAVData - esporta i dati come Oracle - (dati)
+$navDataDesc = 'CRONUS DATAFILE Copy'
+$startCompany = 'CRONUS AG'
+$destCompany = 'CRONUS DESTINATION'
+$companyArray = 'Workshop company', 'Wolvering Inc.', 'Slice of Life srl', 'Rick Grimes & Co.'
+
+Export-NAVData -ServerInstance $newSrvInstance `
+-FilePath "$filePath\cronus" `
+-Description $navDataDesc `
+-CompanyName $startCompany `
+-Verbose
+Get-NAVDataFile -FilePath "$filepath\cronus.navdata" -Verbose
+
+#Companies
+Copy-NAVCompany -DestinationCompanyName $destCompany -SourceCompanyName $startCompany -ServerInstance $newSrvInstance -Force -verbose
+foreach ($item in $companyArray)
+     {
+        New-NAVCompany -CompanyName $item -ServerInstance $newSrvInstance -Verbose -force         
+     }
+
+Remove-NAVCompany -CompanyName $startCompany -ServerInstance $newSrvInstance -Force -verbose 
+Get-NAVCompany $newSrvInstance
+Import-NAVData $newSrvInstance -FilePath $filePath\cronus.navdata -AllCompanies -force -Verbose
+Get-NAVCompany $newSrvInstance
+Rename-NAVCompany -CompanyName $startCompany -NewCompanyName "$startCompany RENAMED" -ServerInstance $newSrvInstance -Force -VERBOSE
+Get-NAVCompany $newSrvInstance
+Import-NAVData $newSrvInstance -FilePath $filePath\cronus.navdata -AllCompanies -force -Verbose
+Get-NAVCompany $newSrvInstance
+
+#Create PermissionSet -> Permissions -> Users
+$permSetId = 'SALES_CUSTOM'      #Define SET ID
+$permSetName = 'SALES_CUSTOM Permissions'   #Define Set Name
+$myName = 'Roberto Stefanetti MVP'   #Define User
+$myProfileID = 9019   #Define Profile ID
+
+# Create new Permission Set
+New-NAVServerPermissionSet -PermissionSetId $permSetId -PermissionSetName 
+$permSetName -ServerInstance $newSrvInstance -Verbose
+
+#Create new user (windows account in this case)
+New-NAVServerUser -WindowsAccount $serviceAccount -FullName $myName -LicenseType Full -CreateWebServicesKey -ProfileId $myProfileID -ServerInstance $newSrvInstance
+
+#Assign user (windows account) to Permission SET
+New-NAVServerUserPermissionSet -PermissionSetId 'SUPER'-WindowsAccount $serviceAccount -ServerInstance $newSrvInstance -Verbose
+
+#Assign Permission SET to user account
+New-NAVServerUserPermissionSet -PermissionSetId $permsetid -WindowsAccount $serviceAccount -ServerInstance $newSrvInstance -Verbose
+
+#Assign permissions 'RIME' True for table 18 to $permSetId 
+New-NAVServerPermission -PermissionSetId $permSetId -ObjectType TableData -ObjectId 18 -Read Yes -Insert Yes -Modify Yes -Execute Yes -ServerInstance $newSrvInstance -Verbose
+
+#CREATE NEW Web Service
+$wsItemService = 'ItemCardWS'
+$wsTopCustOvw = 'TopCustomerOverview'
+New-NAVWebService -ObjectType Page `
+-ObjectId 30 `
+-ServiceName $wsItemService `
+-Published $true `
+-ServerInstance $newSrvInstance -Verbose
+Get-NAVWebService -ServerInstance $newSrvInstance | Format-Table
+Remove-NAVWebService -ServerInstance $newSrvInstance `
+-ServiceName $wsTopCustOvw -Confirm -Verbose -ObjectType Query
+Get-NAVWebService -ServerInstance $newSrvInstance | Format-Table
+
+#Add-In
+Get-command *addin* | Format-Wide
+Get-NAVAddIn -ServerInstance $newSrvInstance | Out-GridView
+
+$openFileDialog.ShowDialog()
+$addInPath = $openFileDialog.FileName
+$addInPath
+
+$loadAssembly = [System.Reflection.Assembly]::loadfile($addInPath)
+$assembllyFullName = $loadAssembly.FullName
+$assembllyFullName
+
+$pkt = $assembllyFullName.Substring($assembllyFullName.IndexOf("PublicKeyToken=")+15)
+$pkt
+
+$addInName = 'WorkshopHello'
+$addInDesc = 'Workshop assembly loaded through PS'
+New-NAVAddIn -AddInName $addInName -PublicKeyToken $pkt `
+-Category DotNetInteroperability `
+-Description $addInDesc `
+-ServerInstance $newSrvInstance -Verbose
+
+Get-NAVAddIn -ServerInstance $newSrvInstance | Out-GridView
+$openFileDialog.ShowDialog()
+$addInZipPath = $openFileDialog.FileName
+$addInZipPath
+Set-NAVAddIn -AddInName $addInName -PublicKeyToken $pkt `
+-ResourceFile $addInZipPath `
+-ServerInstance $newSrvInstance -Verbose
+
+# INVOKE CODEUNITS
+Invoke-NAVCodeunit -CodeunitId 50333 -ServerInstance $newSrvInstance
+
+
+# BALLON TIP
+function New-BalloonTip {
+[CmdletBinding()]
+Param(
+$TipText='Balloon Body text',
+$TipTitle='Balloon Title',
+[int]$TipDuration='Duration in ms. E.g. 10000'
+)
+
+
+# READ EVENT VIEWER
+Get-WinEvent -ProviderName 'MicrosoftDynamicsNAVServer$DynamicsNAV110' -Maxevents 10 |  Out-GridView
+
+# READ COMPANIES
+Import-Module 'C:\Program Files\Microsoft Dynamics NAV\110\Service\NavAdminTool.ps1'
+Get-Module Microsoft.Dynamics.Nav.Management
+
+$Navsrv = 'DynamicsNAV110'
+$companies = 'RS, 'RS2, 'RS3'
+
+foreach ($item in $companies)
+{
+    New-NAVCompnany -ServerInstance $Navsrv -CompanyName $item
+}
+Get-NAVCompany $Navsrv 
+
+
+#SHUTDOWAN NAV SERVER
+$collection= Get-Service *Dyna*
+$collection | Out-File -FilePath c
+
+SET alias np nopetad
+
+Foreach ($servizio in $collection)
+{
+  if ($servizio.Status.ToString() -eq 'Running')
+    Stop-Seervice Servizio.name #stessa cosa
+    Servizo.Stop() #stessa cosa
+
+}
+
+
+#EXPORT ON XML FILE
+Get-Service *nav* | Out-GridView -PassThru | Export-Clixml c:\temp\file.xml
+
+#READ TEXT FILE (CONTENT)
+Get-Content 
+Set-Content
+
+$fileread = Get-Content -Path c:\temp\file.xml
+$fileread
+
+#PS REMOTE 
+Get-Command REMOTE 
+New-PSSession -ComputerName localhost
+
+#GET PROCESS
+Get-Process | Sort-Object -Property CPU -Descending | ForEach-Object {echo $_.WorkingSet64} | Out-GridView
+

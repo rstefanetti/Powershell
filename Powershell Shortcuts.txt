@@ -1,0 +1,15 @@
+Some Powershell ISE Shortcuts
+
+F1 > HELP COMMANDS HELP
+
+CTRL1, CTRL2, CTRL3 
+> vsiualize many columns
+
+F5, F8
+> Compile mode
+
+CTRL+J 
+> Snippet
+ 
+TILDE ` (on english keyword)
+> Process next line (cotinuos running)
