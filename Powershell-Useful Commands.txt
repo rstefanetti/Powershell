@@ -179,3 +179,46 @@ New-PSSession -ComputerName localhost
 #GET PROCESS
 Get-Process | Sort-Object -Property CPU -Descending | ForEach-Object {echo $_.WorkingSet64} | Out-GridView
 
+
+
+# Invoke-WebRequest cmdlet
+
+# MICROSOFT EXAMPLE
+# $response = Invoke-WebRequest -URI https://www.bing.com/search?q=how+many+feet+in+a+mile
+# $response.InputFields | Where-Object {
+#    $_.name -like "* Value*"
+# } | Select-Object Name, Value
+    
+
+
+#TEST
+
+#CASE 1 - Invoke-WebRequest
+$Credential = [System.Management.Automation.PSCredential]::new('USER',(ConvertTo-SecureString 'PASSWORD' -AsPlainText -Force))
+
+$Body = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sal="urn:microsoft-dynamics-schemas/page/salesorder">
+<soapenv:Header/>
+<soapenv:Body>
+<sal:Read>
+<sal:No>101005</sal:No>
+</sal:Read>
+</soapenv:Body>
+</soapenv:Envelope>'
+
+
+#INVOKE WEBREQUEST
+Invoke-WebRequest -Credential $Credential -Uri http://localhost:7848/INSTANCE/WS/CRONUS%20Italia%20S.p.A./Page/SalesOrder
+-Headers (@{SOAPAction='Read'}) 
+-Method Post
+-Body $Body 
+-ContentType application/xml 
+
+
+#CASE 2 - WebServiceProxy
+$Credential = [System.Management.Automation.PSCredential]::
+new('USER',(ConvertTo-SecureString 'PASSWORD' -AsPlainText -Force))
+
+$Client = New-WebServiceProxy -Uri 
+'http://localhost:7848/INSTANCE/WS/CRONUS%20Italia%20S.p.A./Page/SalesOrder' -Credential $Credential
+
+$Client.Read('101005')
