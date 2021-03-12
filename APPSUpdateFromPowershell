@@ -1,0 +1,31 @@
+#APPS Update from Powershell
+
+#parameters:
+- $instance -> BC instanca
+- $appfile -> file ".app" new
+- $appname -> APP Name
+- $newversion -> new version to install
+- $oldversion -> version actully installed (unistalled at the end od process)
+
+# Sample Data
+$instance = 'BC180'
+$appfile = 'C:\temp\RS_APP1_3.0.0.7.app'
+$appname = 'RS APP CLOUD'
+$newversion = '3.0.0.7'
+$oldversion = '3.0.0.6'
+
+
+#PROCESS
+
+#Publish APP
+Publish-NAVApp -ServerInstance $instance -Path $appfile -SkipVerification
+
+#Sync APP
+Sync-NAVApp -ServerInstance $instance -Name $appname -version $newversion
+
+#DataUpgrade APP
+Start-NAVAppDataUpgrade -ServerInstance $instance -Name $appname -Version $newversion
+
+#Unistall APP
+Uninstall-NAVApp -ServerInstance $instance -Name $appname -Version $oldversion
+Unpublish-NAVApp -ServerInstance $instance -Name $appname -Version $oldversion
