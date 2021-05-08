@@ -27,7 +27,7 @@ Import-Module "C:\Powershell Script\AvailableAppsUpdates-BCAppSource.ps1"
 #TOKEN, ENVIRONMENT, APPID E NAME
 $authContext = New-BcAuthContext –includeDeviceLogin -verbose   #GET TOKEN
 $environment = "Production"
-$appId = "12233434545454545"  #GLLOBAL APP
+$appId = "12233434545454545"  #GLOBAL APP
 $appName = "APP NAME"
 
 #Read last version for a published APP
