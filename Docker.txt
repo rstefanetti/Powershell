@@ -1,0 +1,57 @@
+# *** BCCONTAINER BC18ITAONPREMISE
+# *** REMOVE BCContainer ***
+# remove-BcContainer -containerName bc18ita (sandbox)
+# uninstall-module BCcontainerhelper -force
+
+install-module BCcontainerhelper -force 
+
+
+#controlla ultima release BC2021W1 - v18.1
+Write-Host -ForegroundColor Yellow "Ultima sandbox preparata da Microsoft"
+Get-BCArtifactUrl -type Sandbox -country "it"
+
+#risultato
+#https://bcartifacts.azureedge.net/sandbox/18.1.24822.25596/it -v18
+
+
+
+
+#Variables
+$containerName = 'bc18ita2'  #LOWERCASE NAME
+$password = '$Pass@ord!'
+$securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
+$credential = New-Object pscredential 'admin', $securePassword
+$auth = 'UserPassword'
+$artifactUrl = Get-BcArtifactUrl -type 'sandbox' -country 'it' -select 'Latest'  
+$licenseFile = 'C:\LIC\Lic.flf'
+
+#Publish Minimal Ports - normal and SSL
+#$additionalParameters = @("--publish 8080:8080",
+#                          "--publish 443:443", 
+#                          "--publish 7046-7049:7046-7049")
+
+
+# *** CREATE BC18 ITA CONTAINER
+New-BcContainer `
+    -accept_eula `
+    -useSSL `
+    -containerName $containerName `
+    -credential $credential `
+    -auth $auth `
+    -artifactUrl $artifactUrl `
+    -imageName $containerName `
+    -multitenant:$false `
+    -assignPremiumPlan `
+    -licenseFile $licenseFile `
+    -dns '8.8.8.8' `
+    -memoryLimit 4G `
+    -updateHosts 
+    #-additionalParameters $additionalParameters `   #Publish Ports
+
+
+     
+# *** RUN DOCKER IMAGE - MANUAL STARTING
+docker run -e accept_eula=Y -m 4G bc18ita
+
+
+
