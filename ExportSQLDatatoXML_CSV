@@ -1,0 +1,131 @@
+POWERSHELL SCRIPT EXAMPLE
+
+Reading an SQL view and saving the output to CSV or XML file
+
+#RS, v1.1 – Export SQL data to CSV or XML File via Powershell
+
+function ExportViewTolFile
+
+{
+
+param
+
+(
+
+[string]$outputType,
+
+[string]$filename
+
+)
+
+#Connection to SQL Server and DB
+
+$SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+
+$SqlConnection.ConnectionString = “Server=NAVBCSERVER;Database=DBNAME;Integrated Security=True” #DB SERVER + DB + integrated Security
+
+$SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+
+#Connection to query – EXAMPLE V_LISTINI View
+
+$SqlCmd.CommandText = “SELECT [VLI_LISTINO], [VLI_ARTICOLO], [VLI_COLORE], [VLI_MISURA], [VLI_PREZZO], [VLI_DATAINIZIO], [VLI_DATAFINE], [VLI_VALUTA] from [dbo].[V_LISTINI] order by [VLI_ARTICOLO]”
+
+#SQL Connection by SQL ADAPTER
+
+$SqlCmd.Connection = $SqlConnection
+
+$SqlAdapter = New-Object System.Data.SqlClient.SqlDataAdapter
+
+$SqlAdapter.SelectCommand = $SqlCmd
+
+#SQL Dataset
+
+$DataSet = New-Object System.Data.DataSet
+
+$SqlAdapter.Fill($DataSet)
+
+$SqlConnection.Close()
+
+#OUTPUT TABLE in CSV o XML – export-csv or Export-Clixml
+
+if ($outputType -eq “text”)
+
+{
+
+$DataSet.Tables[0] | export-csv -Path $filename -NoTypeInformation #export in format CSV
+
+}
+
+if ($outputType -eq “xml”)
+
+{
+
+$DataSet.Tables[0] | Export-Clixml -Path $filename -NoTypeInformation #export in format XML
+
+}
+
+}
+
+#Selected export type function
+
+#CALL FUNCTION – CSV export
+
+ExportViewTolFile “text” “c:\temp\Export_V_ListiniB2C2.csv”
+
+#CALL FUNCTION – XML export
+
+ExportViewTolFile “xml” “c:\temp\Export_V_ListiniB2C_NewXML.xml”
+
+OUTPUT 🡪 CSV or XML file
+
+
+
+RUN FROM POWERSHELL, POWERSHELL ISE OR BY NAV RTC CLIENT OR NAS
+
+From Powershell ISE, SURE!
+
+Immagine che contiene testo
+
+Descrizione generata automaticamente
+
+Run powershell In DYNAMICS NAV\BC
+
+If you need to run a powershell procedure from old NAVs or BC, you can call it through the .NET datatype. Using the System.Diagnostics.Process class in .Net Framework possible to execute it in hidden mode and wait for the end of the operation.
+
+
+
+Example
+
+IF CONFIRM(cText002) THEN
+
+ExtPSRun.PowershellRunner(‘pathfile.ps1’); // Poweshell
+
+Function PowershellRunner(parPSScriptpathfile : Text[255])
+
+//Run Process .NET in diagnostic mode
+
+VAR process , dotnet, System.Diagnostics.Process
+
+process := process.Process;
+
+process.StartInfo.UseShellExecute := FALSE; //NO SHELL;
+
+process.StartInfo.FileName := ‘powershell.exe’; //POWERSHELL OR OTHERS APPS
+
+process.StartInfo.Arguments := ‘/c ‘ + parPSScriptpathfile; //Commands + file from path (for example a complex powershell script)
+
+//NO WINDOW
+
+process.StartInfo.CreateNoWindow := TRUE; //NO WINDOW, HIDDEN MODE
+
+//RUN Process
+
+process.Start(); //RUN POWERSHELL INSTANCE
+
+//WAIT FOR COMPLETITION (EXIT)
+
+process.WaitForExit(); //WAIT FOR EXIT (COMPLETITION)
+
+//Clear process
+
+CLEAR(process);
