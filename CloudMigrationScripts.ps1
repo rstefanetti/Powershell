@@ -1,6 +1,5 @@
 ﻿# KALI Style - Cloud Data Migration APIs E2E (END TO END) - RS mod. 04/12/2022
 
-
 # **  PRE-REQUIREMENTS ** 
 
 
@@ -12,15 +11,15 @@ Install-Module -Name MSAL.PS  # command on the first run, unless you have instal
 Import-Module "MSAL.PS"
 
 #Path test CASE
-$statusTextHelperPath = "C:\Clienti\ERREA SPORT\PROGETTO BC\PWSHELL_CLOUDS_MIGRATION_TOOLS\CloudMigrationStatusText.psm1"
+$statusTextHelperPath = "CloudMigrationStatusText.psm1"
 
 #$statusTextHelperPath = Join-Path (Split-Path -Path ($MyInvocation.MyCommand.Path) -Parent) "C:\Clienti\ERREA SPORT\PROGETTO BC\PWSHELL_CLOUDS_MIGRATION_TOOLS\CloudMigrationStatusText.psm1"
 Import-Module $statusTextHelperPath #running texr comments
 
 
 #unclocK unsigned file
-Unblock-File -Path "C:\Clienti\ERREA SPORT\PROGETTO BC\PWSHELL_CLOUDS_MIGRATION_TOOLS\CloudMigrationStatusText.psm1" 
-Import-Module  "C:\Clienti\ERREA SPORT\PROGETTO BC\PWSHELL_CLOUDS_MIGRATION_TOOLS\CloudMigrationStatusText.psm1" 
+Unblock-File -Path CloudMigrationStatusText.psm1" 
+Import-Module  "CloudMigrationStatusText.psm1" 
 
 
 #BC Container Helper
@@ -28,19 +27,18 @@ Import-Module  "C:\Clienti\ERREA SPORT\PROGETTO BC\PWSHELL_CLOUDS_MIGRATION_TOOL
 #Docker Access, may be usefull
 
 
-
 # ** CLOUD MIGRATION CONFIG-PARAMETERS **
 # Global Parameters - Update to fit the tenant
-$script:AADTenantID =     "98ba312a-9b33-4aa4-bd93-ca3c12d86c7a"         # e.g. 12aa09b9-15ab-ac13-bb8d-000d3a2b911a"
-$script:CurrentUserName = "rstefanetti@demomsdyn365bc.onmicrosoft.com"   # update to users credentials
-$script:CurrentPassword = "U5i6!sB1z0LtH3!eJ-8f"
+$script:AADTenantID =     "ca3c6c7a"         # e.g. 12aa09b9-15ab-ac13-bb8d-000d3a2b911a"
+$script:CurrentUserName = "s.com"   # update to users credentials
+$script:CurrentPassword = "U-8f"
 $script:EnvironmentName = "CloudMigration"
-$script:MainCompanyId =   "59e2bc77-df6c-ed11-81b5-6045bd8e554a"         # E.g. 'a42119b9-15ab-ec11-bb8d-000d3a2b992c - Cronus SaaS Id or other company that is registered and not cloud migrated'
+$script:MainCompanyId =   "59bd554a"         # E.g. 'a42119b9-15ab-ec11-bb8d-000d3a2b992c - Cronus SaaS Id or other company that is registered and not cloud migrated'
 
 
 #OAuth2 App parameters - Register your app and update to match
 #ClientID + User\Password
-$script:ClientId = "f09b5a50-cd01-4152-817f-150b89dac596"  #RS - TENANT DEMO CLIENT ID APP - registered in Azure Portal+BC remote Client ID APP
+$script:ClientId = "f09b6"  #RS - TENANT DEMO CLIENT ID APP - registered in Azure Portal+BC remote Client ID APP
 $script:RedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient"  #redirect URI
 #$script:RedirectUri = "https://localhost"
 
@@ -1011,14 +1009,13 @@ function Create-AuthorizationHeader
 
 
 
-
 # *************************************
 # ***  LAUNCH CLOUD DATA MIGRATION  ***
 # *************************************
 
 
 # Chiamata a Cloud MIgration E2E - esempio da Cronus Local
-Run-CloudMigrationE2E -SqlConnectionString "Server=BC22V2ITA\SQLEXPRESS;Database=CRONUS;UID=admin;PWD=P@ssw0rd;".
+Run-CloudMigrationE2E -SqlConnectionString "Server=BC22V2ITA\SQLEXPRESS;Database=CRONUS;UID=ad;PWD=rd;".
 
 
 
